@@ -88,7 +88,14 @@ export async function POST(req: Request) {
           `<p style="margin-top:12px;">Order ID: ${order.id}</p>`,
           '</div>',
         ].join('');
-  }
+
+        await sendOrderEmail({
+          to: order.user.email,
+          subject: 'Your Kudla Delights order confirmation',
+          html,
+        });
+      }
+    }
   }
 
   return NextResponse.json({ received: true });
