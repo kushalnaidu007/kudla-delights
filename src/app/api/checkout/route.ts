@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { calculateShippingPence, SHIPPING_CONFIG } from '@/lib/shipping';
 
 const itemSchema = z.object({
@@ -101,6 +101,7 @@ export async function POST(req: Request) {
       });
     }
 
+    const stripe = getStripe();
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItemsWithShipping,
