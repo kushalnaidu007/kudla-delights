@@ -19,7 +19,7 @@ export const CartDrawer = () => {
         Cart ({itemCount})
       </button>
       {open && (
-        <div className="absolute right-0 mt-3 w-[320px] rounded-3xl border border-stone-200 bg-white p-4 shadow-xl">
+        <div className="absolute right-0 mt-3 w-[320px] max-w-[90vw] rounded-3xl border border-stone-200 bg-white p-4 shadow-xl sm:w-[360px] sm:max-w-none">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold">Your cart</p>
             <button
