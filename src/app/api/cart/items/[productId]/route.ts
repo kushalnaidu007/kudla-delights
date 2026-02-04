@@ -10,8 +10,9 @@ const bodySchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { productId: string } },
+  { params }: { params: Promise<{ productId: string }> },
 ) {
+  const { productId } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Auth required' }, { status: 401 });
@@ -23,11 +24,11 @@ export async function PATCH(
 
   if (quantity === 0) {
     await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id, productId: params.productId },
+      where: { cartId: cart.id, productId },
     });
   } else {
     await prisma.cartItem.updateMany({
-      where: { cartId: cart.id, productId: params.productId },
+      where: { cartId: cart.id, productId },
       data: { quantity },
     });
   }
@@ -42,8 +43,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { productId: string } },
+  { params }: { params: Promise<{ productId: string }> },
 ) {
+  const { productId } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Auth required' }, { status: 401 });
@@ -53,7 +55,7 @@ export async function DELETE(
   if (!cart) return NextResponse.json({ items: [] });
 
   await prisma.cartItem.deleteMany({
-    where: { cartId: cart.id, productId: params.productId },
+    where: { cartId: cart.id, productId },
   });
 
   const updated = await prisma.cart.findUnique({
