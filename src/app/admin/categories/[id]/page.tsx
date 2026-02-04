@@ -28,9 +28,9 @@ async function updateCategory(categoryId: string, formData: FormData) {
 export default async function EditCategoryPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
   const category = await prisma.category.findUnique({ where: { id } });
 
   if (!category) {
