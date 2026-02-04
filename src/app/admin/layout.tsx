@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AdminLogout } from '@/components/admin-logout';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/categories">Categories</Link>
           <Link href="/admin/orders">Orders</Link>
           <Link href="/">Back to shop</Link>
+          <AdminLogout />
         </div>
       </div>
       {children}
