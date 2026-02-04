@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Manrope } from 'next/font/google';
 import './globals.css';
-import { SiteHeader } from '@/components/site-header';
+import { SiteHeaderWrapper } from '@/components/site-header-wrapper';
 import { CartProvider } from '@/components/cart-provider';
 import { AppSessionProvider } from '@/components/session-provider';
 
@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <AppSessionProvider>
           <CartProvider>
-            <SiteHeader />
+            <SiteHeaderWrapper />
             <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
           </CartProvider>
         </AppSessionProvider>

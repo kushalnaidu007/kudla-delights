@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import type { CartItem, CartState } from '@/lib/cart';
-import { CART_STORAGE_KEY } from '@/lib/cart';
+import { CART_STORAGE_KEY, mapServerItems } from '@/lib/cart';
 
 type CartContextValue = {
   items: CartItem[];
@@ -31,6 +32,8 @@ const readStoredCart = (): CartState => {
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const { status } = useSession();
+  const isAuthed = status === 'authenticated';
 
   useEffect(() => {
     setItems(readStoredCart().items);
@@ -41,7 +44,36 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ items }));
   }, [items]);
 
+  useEffect(() => {
+    if (!isAuthed) return;
+    const sync = async () => {
+      const localItems = readStoredCart().items;
+      const response = await fetch('/api/cart/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: localItems }),
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      setItems(mapServerItems(data.items ?? []));
+    };
+    sync();
+  }, [isAuthed]);
+
   const addItem = (item: CartItem) => {
+    if (isAuthed) {
+      fetch('/api/cart/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: item.productId, quantity: item.quantity }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.items) setItems(mapServerItems(data.items));
+        });
+      return;
+    }
+
     setItems((prev) => {
       const existing = prev.find((entry) => entry.productId === item.productId);
       if (existing) {
@@ -56,6 +88,19 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    if (isAuthed) {
+      fetch(`/api/cart/items/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.items) setItems(mapServerItems(data.items));
+        });
+      return;
+    }
+
     setItems((prev) =>
       prev
         .map((entry) =>
@@ -66,10 +111,27 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const removeItem = (productId: string) => {
+    if (isAuthed) {
+      fetch(`/api/cart/items/${productId}`, { method: 'DELETE' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.items) setItems(mapServerItems(data.items));
+        });
+      return;
+    }
+
     setItems((prev) => prev.filter((entry) => entry.productId !== productId));
   };
 
-  const clear = () => setItems([]);
+  const clear = () => {
+    if (isAuthed) {
+      Promise.all(items.map((item) => fetch(`/api/cart/items/${item.productId}`, { method: 'DELETE' }))).finally(
+        () => setItems([]),
+      );
+      return;
+    }
+    setItems([]);
+  };
 
   const value = useMemo(() => {
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
