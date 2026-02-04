@@ -61,14 +61,33 @@ export async function POST(req: Request) {
         const itemsHtml = order.items
           .map(
             (item) =>
-              `<tr><td style=\"padding:4px 0;\">${item.name} × ${item.quantity}</td><td style=\"padding:4px 0;text-align:right;\">${formatCurrency(
+              `<tr><td style="padding:4px 0;">${item.name} × ${item.quantity}</td><td style="padding:4px 0;text-align:right;">${formatCurrency(
                 item.pricePence * item.quantity,
                 order.currency,
               )}</td></tr>`,
           )
           .join('');
 
-        const html = `\n          <div style=\"font-family:Arial,sans-serif;font-size:14px;color:#1c1917;\">\n            <h2 style=\"margin:0 0 8px;\">Thanks for your order!</h2>\n            <p style=\"margin:0 0 12px;\">We received your order and will start packing your snacks.</p>\n            <table style=\"width:100%;border-collapse:collapse;\">\n              ${itemsHtml}\n              <tr><td style=\"padding-top:8px;border-top:1px solid #eee;\">Shipping</td><td style=\"padding-top:8px;border-top:1px solid #eee;text-align:right;\">${\n                order.shippingPence === 0\n                  ? 'Free'\n                  : formatCurrency(order.shippingPence, order.currency)\n              }</td></tr>\n              <tr><td style=\"padding-top:6px;font-weight:bold;\">Total</td><td style=\"padding-top:6px;font-weight:bold;text-align:right;\">${formatCurrency(\n                order.totalPence,\n                order.currency,\n              )}</td></tr>\n            </table>\n            <p style=\"margin-top:12px;\">Order ID: ${order.id}</p>\n          </div>\n        `;\n\n        await sendOrderEmail({\n          to: order.user.email,\n          subject: 'Your Kudla Delights order confirmation',\n          html,\n        });\n      }\n     }
+        const shippingLine =
+          order.shippingPence === 0
+            ? 'Free'
+            : formatCurrency(order.shippingPence, order.currency);
+
+        const html = [
+          '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1c1917;">',
+          '<h2 style="margin:0 0 8px;">Thanks for your order!</h2>',
+          '<p style="margin:0 0 12px;">We received your order and will start packing your snacks.</p>',
+          '<table style="width:100%;border-collapse:collapse;">',
+          itemsHtml,
+          `<tr><td style="padding-top:8px;border-top:1px solid #eee;">Shipping</td><td style="padding-top:8px;border-top:1px solid #eee;text-align:right;">${shippingLine}</td></tr>`,
+          `<tr><td style="padding-top:6px;font-weight:bold;">Total</td><td style="padding-top:6px;font-weight:bold;text-align:right;">${formatCurrency(
+            order.totalPence,
+            order.currency,
+          )}</td></tr>`,
+          '</table>',
+          `<p style="margin-top:12px;">Order ID: ${order.id}</p>`,
+          '</div>',
+        ].join('');
   }
   }
 
